@@ -5,12 +5,7 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -21,38 +16,19 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 import java.util.zip.GZIPInputStream
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import com.sovereign.app.AppScope.backgroundScope
 
-/**
- * Extreme Storage & Memory Engine for Sovereign
- * Simplified version without external dependencies
- */
 object ExtremeStorageEngine {
     private const val TAG = "ExtremeStorage"
-    private const val MAX_CACHE_SIZE = 50 * 1024 * 1024 // 50MB
-    
+    private const val MAX_CACHE_SIZE = 50L * 1024 * 1024 // 50MB
+
+    @Volatile
     private var initialized = false
     private val fileCache = ConcurrentHashMap<String, FileEntry>()
-    private val cacheSize = AtomicLong(0)
-    private val scope = backgroundScope
-    private val job = Job()
-
-    @Suppress("UNUSED_PARAMETER")
-    fun initialize(context: Context) {
-        if (initialized) return
-        initialized = true
-        
-        scope.launch(Dispatchers.IO) { pruneLoop() }
-        scope.launch(Dispatchers.IO) { flushLoop() }
-        
-        Log.i(TAG, "ExtremeStorageEngine initialized (simplified)")
-    }
+    private val cacheSize = AtomicLong(0L)
+    private val backgroundJob = Job()
 
     data class FileEntry(
         val path: String,
@@ -61,21 +37,37 @@ object ExtremeStorageEngine {
         val compressed: Boolean
     )
 
+    fun initialize(context: Context) {
+        if (initialized) return
+        initialized = true
+
+        // Start background maintenance using a simple scope
+        CoroutineScope(Dispatchers.IO + backgroundJob).launch {
+            pruneLoop()
+        }
+
+        CoroutineScope(Dispatchers.IO + backgroundJob).launch {
+            flushLoop()
+        }
+
+        Log.i(TAG, "ExtremeStorageEngine initialized (simplified)")
+    }
+
     fun writeFile(path: String, data: ByteArray, compress: Boolean = true): Boolean {
         return try {
             val file = File(path)
             file.parentFile?.mkdirs()
-            
+
             val outputData = if (compress) compressGZIP(data) else data
-            
+
             FileOutputStream(file).use { fos ->
                 fos.write(outputData)
             }
-            
+
             val entry = FileEntry(path, outputData.size.toLong(), System.currentTimeMillis(), compress)
             fileCache[path] = entry
             cacheSize.addAndGet(outputData.size.toLong())
-            
+
             pruneIfNeeded()
             true
         } catch (e: IOException) {
@@ -88,11 +80,11 @@ object ExtremeStorageEngine {
         return try {
             val file = File(path)
             if (!file.exists()) return null
-            
+
             val data = file.readBytes()
             val entry = fileCache[path] ?: FileEntry(path, data.size.toLong(), System.currentTimeMillis(), decompress)
             fileCache[path] = entry.copy(lastAccess = System.currentTimeMillis())
-            
+
             if (decompress && entry.compressed) {
                 decompressGZIP(data)
             } else {
@@ -120,9 +112,15 @@ object ExtremeStorageEngine {
         }
     }
 
+    fun getCacheSize(): Long = cacheSize.get()
+    fun getCacheEntryCount(): Int = fileCache.size
+    fun shutdown() {
+        backgroundJob.cancel()
+    }
+
     private fun compressGZIP(data: ByteArray): ByteArray {
-        return ByteArrayOutputStream().use { baos ->
-            GZIPOutputStream(baos).use { gzos ->
+        return java.io.ByteArrayOutputStream().use { baos ->
+            java.util.zip.GZIPOutputStream(baos).use { gzos ->
                 gzos.write(data)
             }
             baos.toByteArray()
@@ -130,9 +128,13 @@ object ExtremeStorageEngine {
     }
 
     private fun decompressGZIP(data: ByteArray): ByteArray {
-        return ByteArrayInputStream(data).use { bais ->
-            GZIPInputStream(bais).use { gis ->
-                gis.readAllBytes()
+        return java.io.ByteArrayInputStream(data).use { bais ->
+            java.util.zip.GZIPInputStream(bais).use { gis ->
+                gis.readBytes().also { count ->
+                    val result = java.io.ByteArray(count)
+                    bais.readFully(result)
+                    result
+                }
             }
         }
     }
@@ -146,20 +148,26 @@ object ExtremeStorageEngine {
         }
     }
 
-    private suspend fun pruneLoop() {
+    // Non-suspend version - runs in a loop
+    private fun pruneLoop() {
         while (true) {
-            pruneIfNeeded()
-            try { Thread.sleep(60000) } catch (e: InterruptedException) { break }
+            try {
+                pruneIfNeeded()
+                Thread.sleep(60_000L)
+            } catch (e: InterruptedException) {
+                break
+            }
         }
     }
 
-    private suspend fun flushLoop() {
+    // Non-suspend version - runs in a loop
+    private fun flushLoop() {
         while (true) {
-            try { Thread.sleep(30000) } catch (e: InterruptedException) { break }
+            try {
+                Thread.sleep(30_000L)
+            } catch (e: InterruptedException) {
+                break
+            }
         }
     }
-
-    fun getCacheSize(): Long = cacheSize.get()
-    fun getCacheEntryCount(): Int = fileCache.size
-    fun shutdown() { scope.cancel() }
 }

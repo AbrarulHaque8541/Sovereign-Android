@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sovereign"
+        android:textColor="#BB86FC"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btn_toggle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Capture"
+            android:textColor="#FFFFFF"
+            android:background="#1E1E1E"
+            android:textSize="14sp"/>
+
+        <Button
+            android:id="@+id/btn_adb"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ADB"
+            android:textColor="#FFFFFF"
+            android:background="#1E1E1E"
+            android:textSize="14sp"/>
+
+        <Button
+            android:id="@+id/btn_fastboot"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Fastboot"
+            android:textColor="#FFFFFF"
+            android:background="#1E1E1E"
+            android:textSize="14sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <Button
+            android:id="@+id/btn_scripts"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Scripts"
+            android:textColor="#FFFFFF"
+            android:background="#1E1E1E"
+            android:textSize="14sp"/>
+
+        <Button
+            android:id="@+id/btn_packages"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Packages"
+            android:textColor="#FFFFFF"
+            android:background="#1E1E1E"
+            android:textSize="14sp"/>
+    </LinearLayout>
+
+</LinearLayout>

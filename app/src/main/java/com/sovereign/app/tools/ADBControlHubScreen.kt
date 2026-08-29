@@ -4,9 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.background
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +21,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Chip
 import androidx.compose.material3.ChipDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,34 +37,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Rocket
-import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.HourglassFull
-import androidx.compose.material.icons.filled.Radio
-import androidx.compose.material.icons.filled.RunningWithErrors
-import androidx.compose.material.icons.filled.Usb
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filed.Terminal
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.ui.window.PopupProperties
 import com.sovereign.app.SovereignApplication.Companion.backgroundScope
 import com.sovereign.app.tools.NativeSystemServiceEngine
@@ -91,7 +74,7 @@ fun ADBControlHubScreen(
     ) {
         TopToolbar(onNavigateBack = onNavigateBack)
 
-        LazyRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -146,6 +129,7 @@ fun TopToolbar(onNavigateBack: () -> Unit) {
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SystemToolsTab() {
@@ -157,19 +141,30 @@ fun SystemToolsTab() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("System Tools", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        
-        ActionCard("Normal Reboot", Icons.Filled.PowerSettingsNew, "Restart device normally") {
-            NativeSystemServiceEngine.reboot("user")
-        }
-        ActionCard("Bootloader Mode", Icons.Filled.Usb, "Reboot to Fastboot/Bootloader") {
-            NativeSystemServiceEngine.rebootBootloader()
-        }
-        ActionCard("Recovery Mode", Icons.Filled.HourglassFull, "Reboot to Recovery") {
-            NativeSystemServiceEngine.rebootRecovery()
-        }
-        ActionCard("Safe Mode", Icons.Filled.RunningWithErrors, "Reboot into Safe Mode") {
-            NativeSystemServiceEngine.reboot("safe")
-        }
+        Chip(
+            onClick = {},
+            label = { Text("Normal Reboot", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
+        Chip(
+            onClick = {},
+            label = { Text("Bootloader Mode", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
+        Chip(
+            onClick = {},
+            label = { Text("Recovery Mode", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
     }
 }
 
@@ -178,9 +173,7 @@ fun SystemToolsTab() {
 fun AdbTab() {
     val context = LocalContext.current
     var ipInput by remember { mutableStateOf("") }
-    var adbRunning by remember { mutableStateOf(false) }
-    val scope = remember { CoroutineScope(Dispatchers.IO) }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -188,41 +181,25 @@ fun AdbTab() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("ADB Control", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextField(
-                value = ipInput,
-                onValueChange = { ipInput = it },
-                modifier = Modifier.weight(1f),
-                label = { Text("IP Address", color = Color.White.copy(alpha = 0.6f)) },
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = Color(0xFF1E1E1E),
-                    textColor = Color.White
-                ),
-                singleLine = true
+        TextField(
+            value = ipInput,
+            onValueChange = { ipInput = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("IP Address", color = Color.White.copy(alpha = 0.6f)) },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color(0xFF1E1E1E),
+                textColor = Color.White
+            ),
+            singleLine = true
+        )
+        Chip(
+            onClick = {},
+            label = { Text("Connect", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                onClick = {
-                    if (ipInput.isNotBlank()) {
-                        NativeSystemServiceEngine.connectAdbWireless(ipInput)
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00CCFF))
-            ) {
-                Text("Connect", color = Color.Black)
-            }
-        }
-        
-        ActionCard("ADB Loopback", Icons.Filled.Wifi, "Start wireless ADB: 127.0.0.1:5555") {
-            NativeSystemServiceEngine.startAdbLoopback(context)
-        }
-        ActionCard("Stop ADB", Icons.Filled.Clear, "Stop wireless ADB loopback") {
-            NativeSystemServiceEngine.stopAdbLoopback()
-        }
-        ActionCard("Execute Shell Command", Icons.Filled.Code, "Run shell command") {
-            NativeSystemServiceEngine.executeShellCommand("getprop ro.build.version")
-        }
+        )
     }
 }
 
@@ -230,7 +207,6 @@ fun AdbTab() {
 @Composable
 fun FastbootTab() {
     val context = LocalContext.current
-    
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -238,22 +214,22 @@ fun FastbootTab() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Fastboot Control", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        
-        ActionCard("Check Devices", Icons.Filled.Usb, "List fastboot devices") {
-            FastbootProtocolBridge.discoverFastbootDevices()
-        }
-        ActionCard("Flash Boot", Icons.Filled.PlayArrow, "Flash boot partition") {
-            FastbootProtocolBridge.flashPartition("boot", java.io.File("/dev/null"))
-        }
-        ActionCard("Flash Recovery", Icons.Filled.Download, "Flash recovery partition") {
-            FastbootProtocolBridge.erasePartition("recovery")
-        }
-        ActionCard("Unlock Bootloader", Icons.Filled.Clear, "Unlock bootloader") {
-            FastbootProtocolBridge.unlockBootloader()
-        }
-        ActionCard("Lock Bootloader", Icons.Filled.CheckCircle, "Re-lock bootloader") {
-            FastbootProtocolBridge.lockBootloader()
-        }
+        Chip(
+            onClick = {},
+            label = { Text("Check Devices", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
+        Chip(
+            onClick = {},
+            label = { Text("Flash Boot", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
     }
 }
 
@@ -261,8 +237,8 @@ fun FastbootTab() {
 @Composable
 fun ScriptsTab() {
     val context = LocalContext.current
-    val scripts by remember { mutableStateOf(ScriptRunnerUtility.listScripts(context)) }
-    
+    val scripts = remember { ScriptRunnerUtility.listScripts(context) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -270,29 +246,17 @@ fun ScriptsTab() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Script Runner", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        
         if (scripts.isEmpty()) {
             Text("No scripts available", color = Color.White.copy(alpha = 0.6f))
         } else {
-            LazyColumn {
-                items(scripts) { script ->
-                    ActionCard(
-                        script.name,
-                        Icons.Filled.Code,
-                        "${script.type} - ${script.size} bytes"
-                    ) {
-                        ScriptRunnerUtility.executeScript(context, script.name)
-                    }
-                }
-            }
-        }
-        
-        Button(
-            onClick = { ScriptRunnerUtility.createScriptFromTemplate(context, "system_info") },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFBB86FC)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Create System Info Script", color = Color.Black)
+            Chip(
+                onClick = {},
+                label = { Text("Create Script", color = Color.White) },
+                colors = ChipDefaults.chipColors(
+                    containerColor = Color(0xFF1E1E1E),
+                    selectedContainerColor = Color(0xFFBB86FC)
+                )
+            )
         }
     }
 }
@@ -301,8 +265,8 @@ fun ScriptsTab() {
 @Composable
 fun PackagesTab() {
     val context = LocalContext.current
-    val packages by remember { mutableStateOf(NativeSystemServiceEngine.getInstalledPackages()) }
-    
+    val packages = remember { NativeSystemServiceEngine.getInstalledPackages() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -310,51 +274,21 @@ fun PackagesTab() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Package Manager", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-        
-        ActionCard("List Packages", Icons.Filled.Apps, "List all installed packages") {
-            NativeSystemServiceEngine.getInstalledPackages()
-        }
-        ActionCard("Clear Data", Icons.Filled.Clear, "Clear app data") {
-            NativeSystemServiceEngine.clearPackageData("com.example.app")
-        }
-        ActionCard("Force Stop", Icons.Filled.Build, "Force stop app") {
-            NativeSystemServiceEngine.forceStopPackage("com.example.app")
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ActionCard(
-    title: String,
-    icon: ImageVector,
-    description: String,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E1E1E),
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(icon, contentDescription = title, tint = Color(0xFFBB86FC), modifier = Modifier.size(24.dp))
-                Column {
-                    Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.White)
-                    Text(description, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
-                }
-            }
-            Icon(Icons.Filled.ArrowForward, contentDescription = "Execute", tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(18.dp))
-        }
+        Chip(
+            onClick = {},
+            label = { Text("List Packages", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
+        Chip(
+            onClick = {},
+            label = { Text("Clear Data", color = Color.White) },
+            colors = ChipDefaults.chipColors(
+                containerColor = Color(0xFF1E1E1E),
+                selectedContainerColor = Color(0xFFBB86FC)
+            )
+        )
     }
 }

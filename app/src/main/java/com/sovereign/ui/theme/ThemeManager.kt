@@ -9,12 +9,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import com.sovereign.app.SovereignApplication.Companion.dataStore
+import com.sovereign.app.SovereignApplication
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.lang.Long
 
 enum class ThemeType(val id: String, val displayName: String, val description: String) {
     AURORA("aurora", "Aurora Glass", "Futuristic glassmorphism with mesh gradients and neon glows"),
@@ -118,14 +117,14 @@ object ThemeManager {
     }
     
     suspend fun setTheme(context: Context, themeType: ThemeType) {
-        dataStore.edit { prefs: androidx.datastore.preferences.core.MutablePreferences ->
-            prefs[stringPreferencesKey(STORAGE_KEY)] = themeType.id
-        }
+        val sharedPrefs = context.getSharedPreferences("sovereign_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPrefs.edit()
+        editor.putString("selected_theme", themeType.id).apply { commit() }
     }
     
     suspend fun getSavedTheme(): ThemeType {
-        val prefs = dataStore.data.first()
-        val saved = prefs[stringPreferencesKey(STORAGE_KEY)] ?: ThemeType.AURORA.id
+        val sharedPrefs = context.getSharedPreferences("sovereign_prefs", Context.MODE_PRIVATE)
+        val saved = sharedPrefs.getString("selected_theme", ThemeType.AURORA.id) ?: ThemeType.AURORA.id
         return ThemeType.values().find { it.id == saved } ?: ThemeType.AURORA
     }
 }

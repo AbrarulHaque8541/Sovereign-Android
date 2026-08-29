@@ -179,9 +179,6 @@ object NativeSystemServiceEngine {
 }
 
 class AdbService : Service() {
-    companion object {
-        private const val TAG = "AdbService"
-    }
     
     override fun onCreate() {
         super.onCreate()

@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.sovereign.app-mergeDebugResources-77:/values-ldltr-v21/values-ldltr-v21.xml",
+            "map": [
+                {
+                    "source": "/root/.gradle/caches/transforms-4/75d4b04cab9aa8d644d7b539a58b835e/transformed/appcompat-1.6.1/res/values-ldltr-v21/values-ldltr-v21.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "112",
+                        "endOffsets": "163"
+                    }
+                }
+            ]
+        }
+    ]
+}

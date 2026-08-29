@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Sovereign</string>
+    <string name="capture_start">Start Capture</string>
+    <string name="capture_stop">Stop Capture</string>
+    <string name="capture_pause">Pause Capture</string>
+    <string name="capture_resume">Resume Capture</string>
+    <string name="server_start">Start Server</string>
+    <string name="server_stop">Stop Server</string>
+    <string name="server_port">Server Port</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_capture">Capture Settings</string>
+    <string name="settings_server">Server Settings</string>
+    <string name="settings_model">Model Settings</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_storage">Storage</string>
+    <string name="permission_overlay">Display over other apps permission needed for capture controls</string>
+    <string name="permission_notification">Notification permission needed for foreground service</string>
+    <string name="permission_media_projection">Screen capture permission needed</string>
+    <string name="permission_audio">Audio recording permission needed</string>
+    <string name="error_capture_failed">Failed to start capture</string>
+    <string name="error_server_failed">Failed to start server</string>
+    <string name="error_model_load_failed">Failed to load model</string>
+    <string name="status_capturing">Capturing…</string>
+    <string name="status_paused">Paused</string>
+    <string name="status_stopped">Stopped</string>
+    <string name="status_server_running">Server running on port %1$d</string>
+    <string name="status_model_loaded">Model loaded: %1$s</string>
+</resources>

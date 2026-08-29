@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Background circle -->
+    <path
+        android:fillColor="#BB86FC"
+        android:pathData="M54,54m-52,0a52,52 0,1 1,104 0a52,52 0,1 1,-104 0" />
+    <!-- Shield shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,18 L54,18 C54,10.7 48,5.3 40.7,5.3 L19.3,5.3 C12,5.3 6.7,10.7 6.7,18 L6.7,70 C6.7,77.3 12,82.7 19.3,82.7 L40.7,82.7 C48,82.7 54,77.3 54,70 L54,70 L54,18 Z M54,24 L54,64 L44,64 L44,44 L32,44 L32,64 L22,64 L22,24 L54,24 Z M40,36 L40,56 L32,56 L32,36 L40,36 Z" />
+</vector>

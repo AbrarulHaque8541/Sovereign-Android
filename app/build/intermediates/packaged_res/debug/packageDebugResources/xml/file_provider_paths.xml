@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- OTA Update APK storage -->
+    <cache-path
+        name="ota_updates"
+        path="updates/" />
+    
+    <!-- Internal app storage -->
+    <files-path
+        name="app_files"
+        path="." />
+    
+    <!-- External cache (if available) -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+    
+    <!-- Downloads folder -->
+    <external-files-path
+        name="downloads"
+        path="Download/" />
+</paths>

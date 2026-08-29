@@ -1,0 +1,22 @@
+# Build outputs
+/build
+/app/build
+*.apk
+*.aar
+
+# Gradle
+.gradle/
+gradlew.bat
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Local config
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db

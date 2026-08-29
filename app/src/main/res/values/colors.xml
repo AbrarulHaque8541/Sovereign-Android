@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Theme Colors -->
+    <color name="background_primary">#121212</color>
+    <color name="background_secondary">#1E1E1E</color>
+    <color name="background_tertiary">#2D2D2D</color>
+    
+    <color name="surface_primary">#1E1E1E</color>
+    <color name="surface_secondary">#2D2D2D</color>
+    <color name="surface_variant">#3D3D3D</color>
+    
+    <color name="primary_purple">#BB86FC</color>
+    <color name="primary_purple_dark">#3700B3</color>
+    <color name="primary_purple_light">#D4B5FC</color>
+    
+    <color name="secondary_teal">#03DAC6</color>
+    <color name="secondary_teal_dark">#018786</color>
+    
+    <color name="error_red">#CF6679</color>
+    <color name="error_red_light">#FF8A80</color>
+    
+    <color name="success_green">#4CAF50</color>
+    <color name="warning_amber">#FFB300</color>
+    
+    <color name="on_primary">#000000</color>
+    <color name="on_secondary">#000000</color>
+    <color name="on_background">#FFFFFF</color>
+    <color name="on_surface">#FFFFFF</color>
+    <color name="on_error">#000000</color>
+    
+    <color name="outline_variant">#1FFFFFFF</color>
+    <color name="outline">#1FFFFFFF</color>
+    
+    <color name="scrim">#000000</color>
+    <color name="shadow">#000000</color>
+    
+    <!-- Capture Overlay -->
+    <color name="overlay_recording">#FF4444</color>
+    <color name="overlay_recording_translucent">#CCFF4444</color>
+    <color name="overlay_background">#CC1E1E1E</color>
+    
+    <!-- Status Colors -->
+    <color name="status_active">#4CAF50</color>
+    <color name="status_paused">#FFB300</color>
+    <color name="status_error">#CF6679</color>
+    <color name="status_idle">#757575</color>
+</resources>

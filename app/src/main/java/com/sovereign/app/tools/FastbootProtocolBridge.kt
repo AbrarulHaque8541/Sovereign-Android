@@ -1,6 +1,8 @@
 package com.sovereign.app.tools
 
+import android.app.Service
 import android.content.Context
+import android.content.Intent
 import android.hardware.usb.UsbManager
 import android.util.Log
 import com.sovereign.app.AppScope.backgroundScope
@@ -58,11 +60,9 @@ object FastbootProtocolBridge {
     fun isBootloaderUnlocked(): Boolean = false
     fun getFastbootState(): String = "DISCONNECTED"
     
-    companion object {
-        fun createFastbootIntent(context: Context): Intent {
-            return Intent(context, FastbootService::class.java).apply {
-                action = "START_FASTBOOT"
-            }
+    fun createFastbootIntent(context: Context): Intent {
+        return Intent(context, FastbootService::class.java).apply {
+            action = "START_FASTBOOT"
         }
     }
 }
@@ -78,6 +78,7 @@ class FastbootService : Service() {
     }
     
     override fun onBind(intent: Intent?): android.os.IBinder? = null
+    
     override fun onDestroy() {
         super.onDestroy()
     }

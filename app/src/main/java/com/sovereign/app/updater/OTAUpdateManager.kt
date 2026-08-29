@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 object OTAUpdateManager {
     private const val TAG = "OTAUpdateManager"
-    private const val CHANNEL_ID = "sovereign_ota_channel"
+    const val CHANNEL_ID = "sovereign_ota_channel"
     private const val NOTIFICATION_ID = 1001
     private const val UPDATE_URL = "https://api.github.com/repos/AbrarulHaque8541/Hermes-1/releases/latest"
     

@@ -1,0 +1,129 @@
+0 verbose cli /usr/bin/node /usr/bin/npm
+1 info using npm@9.2.0
+2 info using node@v22.22.1
+3 timing npm:load:whichnode Completed in 2ms
+4 timing config:load:defaults Completed in 4ms
+5 timing config:load:file:/usr/share/nodejs/npm/npmrc Completed in 18ms
+6 timing config:load:builtin Completed in 20ms
+7 timing config:load:cli Completed in 8ms
+8 timing config:load:env Completed in 2ms
+9 timing config:load:project Completed in 13ms
+10 timing config:load:file:/root/.npmrc Completed in 0ms
+11 timing config:load:user Completed in 2ms
+12 timing config:load:file:/etc/npmrc Completed in 1ms
+13 timing config:load:global Completed in 1ms
+14 timing config:load:setEnvs Completed in 2ms
+15 timing config:load Completed in 53ms
+16 timing npm:load:configload Completed in 55ms
+17 timing npm:load:mkdirpcache Completed in 1ms
+18 timing npm:load:mkdirplogs Completed in 2ms
+19 verbose title npm install opencode-ai@1.18.21
+20 verbose argv "install" "--global" "opencode-ai@1.18.21"
+21 timing npm:load:setTitle Completed in 2ms
+22 timing config:load:flatten Completed in 7ms
+23 timing npm:load:display Completed in 9ms
+24 verbose logfile logs-max:10 dir:/root/.npm/_logs/2026-08-21T16_25_07_077Z-
+25 verbose logfile /root/.npm/_logs/2026-08-21T16_25_07_077Z-debug-0.log
+26 timing npm:load:logFile Completed in 26ms
+27 timing npm:load:timers Completed in 0ms
+28 timing npm:load:configScope Completed in 0ms
+29 timing npm:load Completed in 98ms
+30 timing config:load:flatten Completed in 0ms
+31 timing arborist:ctor Completed in 1ms
+32 silly logfile done cleaning log files
+33 timing idealTree:init Completed in 14ms
+34 timing idealTree:userRequests Completed in 9ms
+35 silly idealTree buildDeps
+36 silly fetch manifest opencode-ai@1.18.21
+37 http fetch GET 200 https://registry.npmjs.org/opencode-ai 7683ms (cache updated)
+38 silly placeDep ROOT opencode-ai@1.18.21 OK for:  want: 1.18.21
+39 silly fetch manifest opencode-linux-x64@1.18.21
+40 silly fetch manifest opencode-darwin-x64@1.18.21
+41 silly fetch manifest opencode-linux-arm64@1.18.21
+42 silly fetch manifest opencode-windows-x64@1.18.21
+43 silly fetch manifest opencode-darwin-arm64@1.18.21
+44 silly fetch manifest opencode-windows-arm64@1.18.21
+45 silly fetch manifest opencode-linux-x64-musl@1.18.21
+46 silly fetch manifest opencode-linux-arm64-musl@1.18.21
+47 silly fetch manifest opencode-linux-x64-baseline@1.18.21
+48 silly fetch manifest opencode-darwin-x64-baseline@1.18.21
+49 silly fetch manifest opencode-windows-x64-baseline@1.18.21
+50 silly fetch manifest opencode-linux-x64-baseline-musl@1.18.21
+51 http fetch GET 200 https://registry.npmjs.org/opencode-linux-x64 18687ms (cache updated)
+52 http fetch GET 200 https://registry.npmjs.org/opencode-windows-arm64 27548ms (cache updated)
+53 http fetch GET 200 https://registry.npmjs.org/opencode-darwin-x64 28405ms (cache updated)
+54 http fetch GET 200 https://registry.npmjs.org/opencode-linux-x64-baseline 34135ms (cache updated)
+55 http fetch GET 200 https://registry.npmjs.org/opencode-darwin-x64-baseline 34351ms (cache updated)
+56 http fetch GET 200 https://registry.npmjs.org/opencode-linux-arm64-musl 34455ms (cache updated)
+57 http fetch GET 200 https://registry.npmjs.org/opencode-linux-x64-musl 34566ms (cache updated)
+58 http fetch GET 200 https://registry.npmjs.org/opencode-linux-arm64 34797ms (cache updated)
+59 http fetch GET 200 https://registry.npmjs.org/opencode-linux-x64-baseline-musl 34862ms (cache updated)
+60 http fetch GET 200 https://registry.npmjs.org/opencode-darwin-arm64 34978ms (cache updated)
+61 http fetch GET 200 https://registry.npmjs.org/opencode-windows-x64-baseline 35106ms (cache updated)
+62 http fetch GET 200 https://registry.npmjs.org/opencode-windows-x64 36716ms (cache updated)
+63 timing idealTree:#root Completed in 44722ms
+64 silly placeDep node_modules/opencode-ai opencode-darwin-arm64@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+65 silly placeDep node_modules/opencode-ai opencode-darwin-x64@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+66 silly placeDep node_modules/opencode-ai opencode-darwin-x64-baseline@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+67 silly placeDep node_modules/opencode-ai opencode-linux-arm64@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+68 silly placeDep node_modules/opencode-ai opencode-linux-arm64-musl@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+69 silly placeDep node_modules/opencode-ai opencode-linux-x64@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+70 silly placeDep node_modules/opencode-ai opencode-linux-x64-baseline@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+71 silly placeDep node_modules/opencode-ai opencode-linux-x64-baseline-musl@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+72 silly placeDep node_modules/opencode-ai opencode-linux-x64-musl@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+73 silly placeDep node_modules/opencode-ai opencode-windows-arm64@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+74 silly placeDep node_modules/opencode-ai opencode-windows-x64@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+75 silly placeDep node_modules/opencode-ai opencode-windows-x64-baseline@1.18.21 OK for: opencode-ai@1.18.21 want: 1.18.21
+76 timing idealTree:node_modules/opencode-ai Completed in 76ms
+77 timing idealTree:node_modules/opencode-ai/node_modules/opencode-darwin-arm64 Completed in 0ms
+78 timing idealTree:node_modules/opencode-ai/node_modules/opencode-darwin-x64 Completed in 0ms
+79 timing idealTree:node_modules/opencode-ai/node_modules/opencode-darwin-x64-baseline Completed in 0ms
+80 timing idealTree:node_modules/opencode-ai/node_modules/opencode-linux-arm64 Completed in 0ms
+81 timing idealTree:node_modules/opencode-ai/node_modules/opencode-linux-arm64-musl Completed in 0ms
+82 timing idealTree:node_modules/opencode-ai/node_modules/opencode-linux-x64 Completed in 0ms
+83 timing idealTree:node_modules/opencode-ai/node_modules/opencode-linux-x64-baseline Completed in 0ms
+84 timing idealTree:node_modules/opencode-ai/node_modules/opencode-linux-x64-baseline-musl Completed in 0ms
+85 timing idealTree:node_modules/opencode-ai/node_modules/opencode-linux-x64-musl Completed in 0ms
+86 timing idealTree:node_modules/opencode-ai/node_modules/opencode-windows-arm64 Completed in 0ms
+87 timing idealTree:node_modules/opencode-ai/node_modules/opencode-windows-x64 Completed in 0ms
+88 timing idealTree:node_modules/opencode-ai/node_modules/opencode-windows-x64-baseline Completed in 0ms
+89 timing idealTree:buildDeps Completed in 44806ms
+90 timing idealTree:fixDepFlags Completed in 3ms
+91 timing idealTree Completed in 44836ms
+92 timing reify:loadTrees Completed in 44908ms
+93 timing reify:diffTrees Completed in 7ms
+94 silly reify mark retired [
+94 silly reify   '/usr/local/lib/node_modules/opencode-ai',
+94 silly reify   '/usr/local/bin/opencode'
+94 silly reify ]
+95 silly reify moves {
+95 silly reify   '/usr/local/lib/node_modules/opencode-ai': '/usr/local/lib/node_modules/.opencode-ai-17abZ4ET',
+95 silly reify   '/usr/local/bin/opencode': '/usr/local/bin/.opencode-8qOgnMKv'
+95 silly reify }
+96 timing reify:rollback:retireShallow Completed in 6ms
+97 timing command:install Completed in 44979ms
+98 verbose stack Error: ENOTEMPTY: directory not empty, rename '/usr/local/lib/node_modules/opencode-ai' -> '/usr/local/lib/node_modules/.opencode-ai-17abZ4ET'
+98 verbose stack     at async Object.rename (node:internal/fs/promises:781:10)
+98 verbose stack     at async moveFile (/usr/share/nodejs/@npmcli/fs/lib/move-file.js:30:5)
+98 verbose stack     at async Promise.allSettled (index 0)
+98 verbose stack     at async [reifyPackages] (/usr/share/nodejs/@npmcli/arborist/lib/arborist/reify.js:234:11)
+98 verbose stack     at async Arborist.reify (/usr/share/nodejs/@npmcli/arborist/lib/arborist/reify.js:158:5)
+98 verbose stack     at async Install.exec (/usr/share/nodejs/npm/lib/commands/install.js:146:5)
+98 verbose stack     at async module.exports (/usr/share/nodejs/npm/lib/cli.js:133:5)
+99 verbose cwd /root
+100 verbose Linux 6.17.0-PRoot-Distro
+101 verbose node v22.22.1
+102 verbose npm  v9.2.0
+103 error code ENOTEMPTY
+104 error syscall rename
+105 error path /usr/local/lib/node_modules/opencode-ai
+106 error dest /usr/local/lib/node_modules/.opencode-ai-17abZ4ET
+107 error errno -39
+108 error ENOTEMPTY: directory not empty, rename '/usr/local/lib/node_modules/opencode-ai' -> '/usr/local/lib/node_modules/.opencode-ai-17abZ4ET'
+109 verbose exit -39
+110 timing npm Completed in 45312ms
+111 verbose unfinished npm timer reify 1787329507408
+112 verbose unfinished npm timer reify:retireShallow 1787329552350
+113 verbose code -39
+114 error A complete log of this run can be found in:
+114 error     /root/.npm/_logs/2026-08-21T16_25_07_077Z-debug-0.log

@@ -58,6 +58,13 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.RunningWithErrors
 import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filed.Terminal
 import androidx.compose.ui.window.PopupProperties
 import com.sovereign.app.SovereignApplication.Companion.backgroundScope
 import com.sovereign.app.tools.NativeSystemServiceEngine
@@ -207,7 +214,7 @@ fun AdbTab() {
             }
         }
         
-        ActionCard("ADB Loopback", Icons.Filled.Radio, "Start wireless ADB: 127.0.0.1:5555") {
+        ActionCard("ADB Loopback", Icons.Filled.Wifi, "Start wireless ADB: 127.0.0.1:5555") {
             NativeSystemServiceEngine.startAdbLoopback(context)
         }
         ActionCard("Stop ADB", Icons.Filled.Clear, "Stop wireless ADB loopback") {
@@ -235,10 +242,10 @@ fun FastbootTab() {
         ActionCard("Check Devices", Icons.Filled.Usb, "List fastboot devices") {
             FastbootProtocolBridge.discoverFastbootDevices()
         }
-        ActionCard("Flash Boot", Icons.Filled.Rocket, "Flash boot partition") {
+        ActionCard("Flash Boot", Icons.Filled.PlayArrow, "Flash boot partition") {
             FastbootProtocolBridge.flashPartition("boot", java.io.File("/dev/null"))
         }
-        ActionCard("Flash Recovery", Icons.Filled.HourglassFull, "Flash recovery partition") {
+        ActionCard("Flash Recovery", Icons.Filled.Download, "Flash recovery partition") {
             FastbootProtocolBridge.erasePartition("recovery")
         }
         ActionCard("Unlock Bootloader", Icons.Filled.Clear, "Unlock bootloader") {
@@ -310,7 +317,7 @@ fun PackagesTab() {
         ActionCard("Clear Data", Icons.Filled.Clear, "Clear app data") {
             NativeSystemServiceEngine.clearPackageData("com.example.app")
         }
-        ActionCard("Force Stop", Icons.Filled.Bolt, "Force stop app") {
+        ActionCard("Force Stop", Icons.Filled.Build, "Force stop app") {
             NativeSystemServiceEngine.forceStopPackage("com.example.app")
         }
     }
@@ -341,13 +348,13 @@ fun ActionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(icon, contentDescription = title, tint = Color(0xFFBB86FC), size = 24.dp)
+                Icon(icon, contentDescription = title, tint = Color(0xFFBB86FC), modifier = Modifier.size(24.dp))
                 Column {
                     Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.White)
                     Text(description, fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
                 }
             }
-            Icon(Icons.Filled.FastForward, contentDescription = "Execute", tint = Color.White.copy(alpha = 0.4f), size = 18.dp)
+            Icon(Icons.Filled.ArrowForward, contentDescription = "Execute", tint = Color.White.copy(alpha = 0.4f), modifier = Modifier.size(18.dp))
         }
     }
 }

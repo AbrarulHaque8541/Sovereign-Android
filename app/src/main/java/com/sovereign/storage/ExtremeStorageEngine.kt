@@ -41,6 +41,7 @@ object ExtremeStorageEngine {
     private val fileCache = ConcurrentHashMap<String, FileEntry>()
     private val cacheSize = AtomicLong(0)
     private val scope = backgroundScope
+    private val job = Job()
 
     @Suppress("UNUSED_PARAMETER")
     fun initialize(context: Context) {

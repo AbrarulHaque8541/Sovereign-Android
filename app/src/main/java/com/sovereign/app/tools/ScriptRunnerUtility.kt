@@ -179,7 +179,7 @@ echo "Android: \$(getprop ro.build.version.release)"
                 execution.process = process
                 
                 val stdoutReader = BufferedReader(InputStreamReader(process.inputStream))
-                var line: String?
+                var line: String? = null
                 var outputSize = 0L
                 
                 while (execution.isRunning.get() && 

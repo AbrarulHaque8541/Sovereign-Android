@@ -99,6 +99,24 @@
             android:theme="@style/Theme.Sovereign"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- ADB Control Activity -->
+        <activity
+            android:name=".adb.AdbControlActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Sovereign" />
+
+        <!-- OTA Updater Activity -->
+        <activity
+            android:name=".updater.UpdaterActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Sovereign" />
+
+        <!-- Storage Manager Activity -->
+        <activity
+            android:name=".storage.StorageManagerActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Sovereign" />
+
         <!-- Foreground Services -->
         <service
             android:name=".LocalSyncService"

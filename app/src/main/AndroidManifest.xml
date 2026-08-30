@@ -92,6 +92,13 @@
             android:exported="false"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+        <!-- Theme Studio Activity -->
+        <activity
+            android:name=".ThemeStudioActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Sovereign"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Foreground Services -->
         <service
             android:name=".LocalSyncService"

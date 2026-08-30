@@ -31,13 +31,23 @@ class MainActivity : AppCompatActivity() {
     private var isCapturing = false
     private var captureIntent: Intent? = null
 
-    // Colors
-    private val primaryColor = Color.parseColor("#6200EE")
-    private val primaryDark = Color.parseColor("#3700B3")
-    private val backgroundColor = Color.parseColor("#121212")
-    private val cardBgColor = Color.parseColor("#1E1E1E")
-    private val textPrimary = Color.WHITE
-    private val textSecondary = Color.parseColor("#B0B0B0")
+    // Colors - loaded from theme
+    private val prefs by lazy { getSharedPreferences("sovereign_prefs", MODE_PRIVATE) }
+    private val themeEngine by lazy { ThemeEngine(this) }
+    private val currentTheme by lazy {
+        val themeId = prefs.getString("theme_id", "LIQUID_GLASS") ?: "LIQUID_GLASS"
+        try {
+            ThemeEngine.getTheme(ThemeEngine.ThemeId.valueOf(themeId))
+        } catch (e: Exception) {
+            ThemeEngine.getTheme(ThemeEngine.ThemeId.LIQUID_GLASS)
+        }
+    }
+    private val primaryColor get() = currentTheme.primary
+    private val primaryDark get() = currentTheme.secondary
+    private val backgroundColor get() = currentTheme.background
+    private val cardBgColor get() = currentTheme.surface
+    private val textPrimary get() = currentTheme.textPrimary
+    private val textSecondary get() = currentTheme.textSecondary
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -183,7 +193,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val captureCard = createQuickActionCard("🎬", "Record", primaryColor) { toggleCapture() }
-        val settingsCard = createQuickActionCard("⚙️", "Settings", Color.parseColor("#607D8B")) { showToast("Settings coming soon!") }
+        val settingsCard = createQuickActionCard("🎨", "Themes", primaryColor) { startActivity(Intent(this@MainActivity, ThemeStudioActivity::class.java)) }
 
         captureCard.layoutParams = LinearLayout.LayoutParams(0, 160, 1f).apply { marginEnd = 8 }
         settingsCard.layoutParams = LinearLayout.LayoutParams(0, 160, 1f).apply { marginStart = 8 }
@@ -241,6 +251,7 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener {
                 when(title) {
                     "Screen Capture" -> toggleCapture()
+                    "Theme Studio" -> startActivity(Intent(this@MainActivity, ThemeStudioActivity::class.java))
                     else -> showToast("$title - Coming soon!")
                 }
             }
@@ -314,9 +325,9 @@ class MainActivity : AppCompatActivity() {
             }
 
             val settingsItems = listOf(
-                Triple("ℹ️", "About", "Version 1.0.1"),
+                Triple("ℹ️", "About", "Version 1.1.0"),
                 Triple("🔒", "Permissions", "Manage app permissions"),
-                Triple("🎨", "Theme", "Dark mode"),
+                Triple("🎨", "Theme Studio", "${currentTheme.emoji} ${currentTheme.name}"),
                 Triple("❓", "Help & Feedback", "Get support")
             )
 
@@ -348,7 +359,7 @@ class MainActivity : AppCompatActivity() {
                 when(title) {
                     "About" -> showAboutDialog()
                     "Permissions" -> requestOverlayPermission()
-                    "Theme" -> showToast("Theme Studio coming soon!")
+                    "Theme" -> startActivity(Intent(this@MainActivity, ThemeStudioActivity::class.java))
                     "Help & Feedback" -> showToast("Contact: support@sovereign.app")
                 }
             }
@@ -451,7 +462,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage("""
                 Universal Android Control Hub
                 
-                Version: 1.0.1
+                Version: 1.1.0
                 
                 Features:
                 • ADB Control Hub
@@ -459,7 +470,7 @@ class MainActivity : AppCompatActivity() {
                 • Screen Recording
                 • Script Runner
                 • Package Manager
-                • 8 Dynamic Themes
+                • 10 Premium Themes
                 • OTA Updates
                 • Extreme Storage
                 

@@ -2,9 +2,11 @@ package com.sovereign.app
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -13,148 +15,389 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.view.ViewGroup
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.sovereign.app.LocalSyncService
 import com.sovereign.app.CaptureService
 
 class MainActivity : AppCompatActivity() {
-    private val TAG = "MainActivity"
     private val MEDIA_PROJECTION_REQUEST = 1001
-
     private val mediaProjectionManager by lazy { getSystemService(MediaProjectionManager::class.java) }
-
     private var mediaProjection: MediaProjection? = null
     private var isCapturing = false
     private var captureIntent: Intent? = null
 
+    // Colors
+    private val primaryColor = Color.parseColor("#6200EE")
+    private val primaryDark = Color.parseColor("#3700B3")
+    private val backgroundColor = Color.parseColor("#121212")
+    private val cardBgColor = Color.parseColor("#1E1E1E")
+    private val textPrimary = Color.WHITE
+    private val textSecondary = Color.parseColor("#B0B0B0")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Check notification permission only (don't loop for overlay)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1003)
             }
         }
         
-        setupUI()
+        setupMainUI()
     }
 
-    private fun setupUI() {
+    private fun setupMainUI() {
         val mainLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundColor(0xFF121212.toInt())
-            setPadding(32, 32, 32, 32)
+            setBackgroundColor(backgroundColor)
         }
 
-        // Title
-        val title = TextView(this).apply {
-            text = "⚡ Sovereign"
-            textSize = 32f
-            setTextColor(0xFFFFFFFF.toInt())
-            gravity = Gravity.CENTER
+        // Header
+        mainLayout.addView(createHeader())
+
+        // Content ScrollView
+        val scrollView = ScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            isFillViewport = true
         }
 
-        // Subtitle
-        val subtitle = TextView(this).apply {
-            text = "Universal Android Control Hub"
-            textSize = 16f
-            setTextColor(0xFF888888.toInt())
-            gravity = Gravity.CENTER
+        val contentLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 24, 32, 100)
         }
 
-        // Button style
-        fun createButton(text: String, color: Int, action: () -> Unit): Button {
-            return Button(this).apply {
-                this.text = text
-                setBackgroundColor(color)
-                setTextColor(0xFFFFFFFF.toInt())
-                textSize = 16f
-                setPadding(24, 20, 24, 20)
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { setMargins(0, 16, 0, 16) }
-                setOnClickListener { action() }
-            }
+        // Description
+        contentLayout.addView(createDescription())
+        
+        // Quick Actions
+        contentLayout.addView(createSectionTitle("⚡ Quick Actions"))
+        contentLayout.addView(createQuickActionsGrid())
+
+        // Main Tools
+        contentLayout.addView(createSectionTitle("🔧 Tools"))
+        
+        val tools = listOf(
+            Triple("📱", "ADB Control", "Connect & manage devices" to primaryColor),
+            Triple("⚡", "Fastboot Tools", "Flash partitions" to Color.parseColor("#FF9800")),
+            Triple("📜", "Script Runner", "Execute shell scripts" to Color.parseColor("#4CAF50")),
+            Triple("📦", "Package Manager", "Install & manage apps" to Color.parseColor("#E91E63")),
+            Triple("🎬", "Screen Capture", "Record screen + audio" to primaryColor),
+            Triple("🎨", "Theme Studio", "Customize look & feel" to Color.parseColor("#2196F3")),
+            Triple("🔄", "OTA Updates", "Check for updates" to Color.parseColor("#FF5722")),
+            Triple("💾", "Extreme Storage", "Optimize storage" to Color.parseColor("#607D8B"))
+        )
+
+        tools.forEach { (emoji, title, descColor) ->
+            val desc = descColor as Pair<*, *>
+            contentLayout.addView(createFeatureCard(emoji, title, desc.first as String, desc.second as Int))
         }
 
-        // Capture Button
-        val captureBtn = createButton("🎬 Screen Capture", 0xFF6200EE.toInt()) { toggleCapture() }
-        
-        // ADB Button  
-        val adbBtn = createButton("📱 ADB Control", 0xFF03DAC5.toInt()) { openAdbHub() }
-        
-        // Fastboot Button
-        val fastbootBtn = createButton("⚡ Fastboot Mode", 0xFFFF9800.toInt()) { openFastboot() }
-        
-        // Scripts Button
-        val scriptsBtn = createButton("📜 Script Runner", 0xFF4CAF50.toInt()) { openScripts() }
-        
-        // Packages Button
-        val packagesBtn = createButton("📦 Package Manager", 0xFFE91E63.toInt()) { openPackages() }
-        
-        // Theme Button
-        val themeBtn = createButton("🎨 Theme Settings", 0xFF9C27B0.toInt()) { openThemeSettings() }
-        
-        // Settings Button
-        val settingsBtn = createButton("⚙️ Settings", 0xFF607D8B.toInt()) { openSettings() }
+        // Settings
+        contentLayout.addView(createSectionTitle("⚙️ Settings"))
+        contentLayout.addView(createSettingsSection())
 
-        mainLayout.addView(title)
-        mainLayout.addView(subtitle)
-        mainLayout.addView(createSpace(32))
-        mainLayout.addView(captureBtn)
-        mainLayout.addView(adbBtn)
-        mainLayout.addView(fastbootBtn)
-        mainLayout.addView(scriptsBtn)
-        mainLayout.addView(packagesBtn)
-        mainLayout.addView(createSpace(16))
-        mainLayout.addView(themeBtn)
-        mainLayout.addView(settingsBtn)
+        scrollView.addView(contentLayout)
+        mainLayout.addView(scrollView)
 
         setContentView(mainLayout)
     }
 
-    private fun createSpace(height: Int): View {
-        return View(this).apply {
+    private fun createHeader(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 48, 32, 32)
+            
+            val gradient = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(primaryColor, primaryDark)
+            )
+            background = gradient
+            
+            val titleRow = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+            }
+
+            val logo = TextView(this@MainActivity).apply {
+                text = "⚡"
+                textSize = 40f
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = 16 }
+            }
+
+            val titleCol = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
+            }
+
+            titleCol.addView(TextView(this@MainActivity).apply {
+                text = "SOVEREIGN"
+                setTypeface(null, Typeface.BOLD)
+                textSize = 28f
+                setTextColor(Color.WHITE)
+            })
+            titleCol.addView(TextView(this@MainActivity).apply {
+                text = "Universal Android Control Hub"
+                textSize = 14f
+                setTextColor(Color.parseColor("#E0E0E0"))
+            })
+
+            titleRow.addView(logo)
+            titleRow.addView(titleCol)
+            addView(titleRow)
+        }
+    }
+
+    private fun createDescription(): TextView {
+        return TextView(this).apply {
+            text = "Powerful tools for Android device management, screen capture, ADB control, and more. All offline, no root required."
+            textSize = 14f
+            setTextColor(textSecondary)
+            setPadding(0, 8, 0, 24)
+        }
+    }
+
+    private fun createSectionTitle(title: String): TextView {
+        return TextView(this).apply {
+            text = title
+            textSize = 18f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(textPrimary)
+            setPadding(0, 24, 0, 16)
+        }
+    }
+
+    private fun createQuickActionsGrid(): LinearLayout {
+        val grid = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            weightSum = 2f
+        }
+
+        val captureCard = createQuickActionCard("🎬", "Record", primaryColor) { toggleCapture() }
+        val settingsCard = createQuickActionCard("⚙️", "Settings", Color.parseColor("#607D8B")) { showToast("Settings coming soon!") }
+
+        captureCard.layoutParams = LinearLayout.LayoutParams(0, 160, 1f).apply { marginEnd = 8 }
+        settingsCard.layoutParams = LinearLayout.LayoutParams(0, 160, 1f).apply { marginStart = 8 }
+
+        grid.addView(captureCard)
+        grid.addView(settingsCard)
+        return grid
+    }
+
+    private fun createQuickActionCard(emoji: String, label: String, color: Int, action: () -> Unit): CardView {
+        return CardView(this).apply {
+            radius = 16f
+            cardElevation = 4f
+            setCardBackgroundColor(color)
+            setOnClickListener { action() }
+
+            val content = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(16, 24, 16, 24)
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+
+            content.addView(TextView(context).apply {
+                text = emoji
+                textSize = 36f
+                gravity = Gravity.CENTER
+            })
+            content.addView(TextView(context).apply {
+                text = label
+                textSize = 14f
+                setTypeface(null, Typeface.BOLD)
+                setTextColor(Color.WHITE)
+                gravity = Gravity.CENTER
+                setPadding(0, 12, 0, 0)
+            })
+
+            addView(content)
+        }
+    }
+
+    private fun createFeatureCard(emoji: String, title: String, description: String, accentColor: Int): CardView {
+        return CardView(this).apply {
+            radius = 12f
+            cardElevation = 2f
+            setCardBackgroundColor(cardBgColor)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                height
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 12, 0, 12) }
+            
+            setOnClickListener {
+                when(title) {
+                    "Screen Capture" -> toggleCapture()
+                    else -> showToast("$title - Coming soon!")
+                }
+            }
+
+            val content = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(20, 20, 20, 20)
+            }
+
+            val iconBg = FrameLayout(context).apply {
+                layoutParams = LinearLayout.LayoutParams(64, 64).apply { marginEnd = 16 }
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    colors = intArrayOf(accentColor, Color.parseColor("#333333"))
+                }
+            }
+
+            iconBg.addView(TextView(context).apply {
+                text = emoji
+                textSize = 28f
+                gravity = Gravity.CENTER
+                layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+            })
+
+            val textContent = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            textContent.addView(TextView(context).apply {
+                text = title
+                textSize = 16f
+                setTypeface(null, Typeface.BOLD)
+                setTextColor(textPrimary)
+            })
+            textContent.addView(TextView(context).apply {
+                text = description
+                textSize = 12f
+                setTextColor(textSecondary)
+                setPadding(0, 4, 0, 0)
+            })
+
+            content.addView(iconBg)
+            content.addView(textContent)
+            content.addView(TextView(context).apply {
+                text = "→"
+                textSize = 20f
+                setTextColor(textSecondary)
+            })
+
+            addView(content)
+        }
+    }
+
+    private fun createSettingsSection(): CardView {
+        return CardView(this).apply {
+            radius = 12f
+            cardElevation = 2f
+            setCardBackgroundColor(cardBgColor)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 12, 0, 24) }
+
+            val content = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+            }
+
+            val settingsItems = listOf(
+                Triple("ℹ️", "About", "Version 1.0.1"),
+                Triple("🔒", "Permissions", "Manage app permissions"),
+                Triple("🎨", "Theme", "Dark mode"),
+                Triple("❓", "Help & Feedback", "Get support")
             )
+
+            settingsItems.forEachIndexed { index, (emoji, title, subtitle) ->
+                if (index > 0) {
+                    val divider = View(context)
+                    divider.setBackgroundColor(Color.parseColor("#333333"))
+                    val params = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 1
+                    )
+                    params.setMargins(84, 0, 20, 0)
+                    divider.layoutParams = params
+                    content.addView(divider)
+                }
+                content.addView(createSettingsRow(emoji, title, subtitle))
+            }
+
+            addView(content)
+        }
+    }
+
+    private fun createSettingsRow(emoji: String, title: String, subtitle: String): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(20, 16, 20, 16)
+
+            setOnClickListener {
+                when(title) {
+                    "About" -> showAboutDialog()
+                    "Permissions" -> requestOverlayPermission()
+                    "Theme" -> showToast("Theme Studio coming soon!")
+                    "Help & Feedback" -> showToast("Contact: support@sovereign.app")
+                }
+            }
+
+            addView(TextView(context).apply {
+                text = emoji
+                textSize = 24f
+                layoutParams = LinearLayout.LayoutParams(48, 48).apply { marginEnd = 16 }
+            })
+
+            val textLayout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            textLayout.addView(TextView(context).apply {
+                text = title
+                textSize = 15f
+                setTextColor(textPrimary)
+            })
+            textLayout.addView(TextView(context).apply {
+                text = subtitle
+                textSize = 12f
+                setTextColor(textSecondary)
+            })
+            addView(textLayout)
+
+            addView(TextView(context).apply {
+                text = "→"
+                textSize = 18f
+                setTextColor(textSecondary)
+            })
         }
     }
 
     private fun toggleCapture() {
         if (!Settings.canDrawOverlays(this)) {
-            // Show dialog to request overlay permission first
             showOverlayPermissionDialog()
             return
         }
-        
-        if (isCapturing) {
-            stopCapture()
-        } else {
-            requestMediaProjection()
-        }
+        if (isCapturing) stopCapture() else requestMediaProjection()
     }
 
     private fun showOverlayPermissionDialog() {
-        val dialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Overlay Permission Required")
-            .setMessage("Screen capture needs overlay permission. Grant it now?")
-            .setPositiveButton("Grant") { _, _ ->
-                requestOverlayPermission()
-            }
-            .setNegativeButton("Cancel", null)
-            .create()
-        dialog.show()
+        AlertDialog.Builder(this)
+            .setTitle("🔒 Overlay Permission Required")
+            .setMessage("Screen recording needs overlay permission to display the indicator. Grant it now?")
+            .setPositiveButton("Grant") { _, _ -> requestOverlayPermission() }
+            .setNegativeButton("Skip") { _, _ -> showToast("Screen recording disabled") }
+            .show()
     }
 
     private fun requestOverlayPermission() {
@@ -185,7 +428,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService(captureIntent!!)
         }
-        Toast.makeText(this, "🎬 Capture started", Toast.LENGTH_SHORT).show()
+        showToast("🎬 Recording started!")
     }
 
     private fun stopCapture() {
@@ -195,37 +438,40 @@ class MainActivity : AppCompatActivity() {
             startService(stopIntent)
             captureIntent = null
         }
-        Toast.makeText(this, "⏹️ Capture stopped", Toast.LENGTH_SHORT).show()
+        showToast("⏹️ Recording stopped!")
     }
 
-    private fun openAdbHub() {
-        Toast.makeText(this, "📱 ADB Control Hub - Coming soon", Toast.LENGTH_LONG).show()
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun openFastboot() {
-        Toast.makeText(this, "⚡ Fastboot Mode - Coming soon", Toast.LENGTH_LONG).show()
-    }
-
-    private fun openScripts() {
-        Toast.makeText(this, "📜 Script Runner - Coming soon", Toast.LENGTH_LONG).show()
-    }
-
-    private fun openPackages() {
-        Toast.makeText(this, "📦 Package Manager - Coming soon", Toast.LENGTH_LONG).show()
-    }
-
-    private fun openThemeSettings() {
-        Toast.makeText(this, "🎨 Theme Settings - Coming soon", Toast.LENGTH_LONG).show()
-    }
-
-    private fun openSettings() {
-        Toast.makeText(this, "⚙️ Settings - Coming soon", Toast.LENGTH_LONG).show()
+    private fun showAboutDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("⚡ SOVEREIGN")
+            .setMessage("""
+                Universal Android Control Hub
+                
+                Version: 1.0.1
+                
+                Features:
+                • ADB Control Hub
+                • Fastboot Tools
+                • Screen Recording
+                • Script Runner
+                • Package Manager
+                • 8 Dynamic Themes
+                • OTA Updates
+                • Extreme Storage
+                
+                Built with ❤️
+                No Shizuku/Bugjaeger needed!
+            """.trimIndent())
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     override fun onDestroy() {
-        if (captureIntent != null) {
-            stopCapture()
-        }
+        if (captureIntent != null) stopCapture()
         super.onDestroy()
     }
 }

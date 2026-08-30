@@ -117,6 +117,18 @@
             android:exported="false"
             android:theme="@style/Theme.Sovereign" />
 
+        <!-- Vault Lock Activity -->
+        <activity
+            android:name=".vault.VaultLockActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Sovereign" />
+
+        <!-- Vault Activity -->
+        <activity
+            android:name=".vault.VaultActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Sovereign" />
+
         <!-- Foreground Services -->
         <service
             android:name=".LocalSyncService"

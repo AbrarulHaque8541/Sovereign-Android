@@ -86,6 +86,7 @@ dependencies {
     val securityCrypto = "androidx.security:security-crypto:1.1.0-alpha06"
     val biometric = "androidx.biometric:biometric:1.2.0-alpha05"
     val workRuntime = "androidx.work:work-runtime-ktx:2.9.0"
+    val drawerLayout = "androidx.drawerlayout:drawerlayout:1.2.0"
     val okioVersion = "3.5.0"
 
     implementation(coreKtx)
@@ -102,6 +103,7 @@ dependencies {
     implementation(securityCrypto)
     implementation(biometric)
     implementation(workRuntime)
+    implementation(drawerLayout)
 
     implementation("com.squareup.okio:okio:$okioVersion")
     implementation("com.squareup.okio:okio-jvm:$okioVersion")

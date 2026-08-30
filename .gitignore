@@ -11,11 +11,21 @@ gradlew.bat
 # IDE
 .idea/
 *.iml
-*.ipr
+*.iPr
 *.iws
 
 # Local config
 local.properties
+
+# Android cache
+.android/
+
+# npm cache
+.npm/
+
+# Opencode
+.local/
+.cache/
 
 # OS
 .DS_Store

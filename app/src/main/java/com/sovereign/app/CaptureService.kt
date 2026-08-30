@@ -6,10 +6,15 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
+import android.hardware.display.VirtualDisplay
+import android.media.AudioFormat
+import android.media.AudioRecord
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
+import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.media.MediaRecorder
 import android.media.projection.MediaProjection
@@ -29,13 +34,19 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class CaptureService : Service() {
-    private const val TAG = "CaptureService"
-    private const val CHANNEL_ID = "sovereign_capture_channel"
-    private const val NOTIFICATION_ID = 1001
-    private const val OVERLAY_REQUEST_CODE = 1001
+    private val TAG = "CaptureService"
+    private val CHANNEL_ID = "sovereign_capture_channel"
+    private val NOTIFICATION_ID = 1001
 
     private val mediaProjectionManager by lazy { getSystemService(MediaProjectionManager::class.java) }
     private val windowManager by lazy { getSystemService(WindowManager::class.java) }
@@ -43,49 +54,45 @@ class CaptureService : Service() {
     private val powerManager: PowerManager by lazy { getSystemService(PowerManager::class.java) }
 
     private var mediaProjection: MediaProjection? = null
-    private var virtualDisplay: android.media.projection.VirtualDisplay? = null
+    private var virtualDisplay: VirtualDisplay? = null
     private var mediaCodec: MediaCodec? = null
     private var mediaRecorder: MediaRecorder? = null
     private var surface: Surface? = null
     private var outputFile: java.io.File? = null
-    private var fileOutputStream: java.io.FileOutputStream? = null
-    private var fileChannel: java.nio.channels.FileChannel? = null
 
-    private val isCapturing = java.util.concurrent.atomic.AtomicBoolean(false)
-    private val isPaused = java.util.concurrent.atomic.AtomicBoolean(false)
-    private val overlayView = java.util.concurrent.atomic.AtomicReference<View?>(null)
-    private var overlayParams: android.view.WindowManager.LayoutParams? = null
+    private val isCapturing = AtomicBoolean(false)
+    private val isPaused = AtomicBoolean(false)
+    private val overlayView = AtomicReference<View?>(null)
+    private var overlayParams: WindowManager.LayoutParams? = null
 
-    private var captureJob: kotlinx.coroutines.Job? = null
-    private var statsJob: kotlinx.coroutines.Job? = null
+    private var captureJob: Job? = null
+    private var statsJob: Job? = null
     private var startTime = 0L
     private var frameCount = 0L
     private var bytesWritten = 0L
 
-    private var videoFormat: android.media.MediaFormat? = null
-    private var audioFormat: android.media.MediaFormat? = null
-    private var videoTrackIndex = -1
-    private var audioTrackIndex = -1
+    private var videoFormat: MediaFormat? = null
 
-    // SharedPreferences for settings (migrated from DataStore)
-    private val prefs: android.content.SharedPreferences by lazy {
-        android.preference.PreferenceManager.getDefaultSharedPreferences(this)
+    private val prefs: SharedPreferences by lazy {
+        getSharedPreferences(SovereignApplication.PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     private val captureResolution: String
-        get = prefs.getString("capture_resolution", "1920x1080") ?: "1920x1080"
+        get() = prefs.getString("capture_resolution", "1920x1080") ?: "1920x1080"
 
     private val captureFps: Int
-        get = prefs.getInt("capture_fps", 30)
+        get() = prefs.getInt("capture_fps", 30)
 
     private val captureBitrate: Int
-        get = prefs.getInt("capture_bitrate", 8000000)
+        get() = prefs.getInt("capture_bitrate", 8000000)
 
     private val audioSource: Int
-        get = prefs.getInt("audio_source", 7) // CAMCORDER
+        get() = prefs.getInt("audio_source", 7)
 
     private val audioSampleRate: Int
-        get = prefs.getInt("audio_sample_rate", 48000)
+        get() = prefs.getInt("audio_sample_rate", 48000)
+
+    private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -96,18 +103,18 @@ class CaptureService : Service() {
         val action = intent?.action ?: return START_STICKY
 
         when (action) {
-            "START_CAPTURE" -> {
-                val projectionData = intent.getParcelableExtra<MediaProjection>("media_projection")
-                if (projectionData != null) {
-                    startCapture(projectionData)
+            ACTION_START -> {
+                val projection = mediaProjection
+                if (projection != null) {
+                    startCapture(projection)
                 }
             }
-            "STOP_CAPTURE" -> stopCapture()
-            "PAUSE_CAPTURE" -> pauseCapture()
-            "RESUME_CAPTURE" -> resumeCapture()
-            "SHOW_OVERLAY" -> showOverlay()
-            "HIDE_OVERLAY" -> hideOverlay()
-            "UPDATE_OVERLAY" -> {
+            ACTION_STOP -> stopCapture()
+            ACTION_PAUSE -> pauseCapture()
+            ACTION_RESUME -> resumeCapture()
+            ACTION_SHOW_OVERLAY -> showOverlay()
+            ACTION_HIDE_OVERLAY -> hideOverlay()
+            ACTION_UPDATE_OVERLAY -> {
                 val text = intent.getStringExtra("text")
                 if (text != null) updateOverlay(text)
             }
@@ -129,25 +136,19 @@ class CaptureService : Service() {
         frameCount = 0
         bytesWritten = 0
 
-        // Create output file
         val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
         val storageDir = android.os.Environment.getExternalStorageDirectory()
         val dir = java.io.File(storageDir, "Sovereign/Captures")
         dir.mkdirs()
         outputFile = java.io.File(dir, "capture_$timestamp.mp4")
 
-        // Initialize HEVC video encoder
         initHevcVideoEncoder()
-
-        // Show overlay
         showOverlay()
 
-        // Start stats update job using backgroundScope
-        statsJob = backgroundScope.launch {
+        statsJob = serviceScope.launch {
             while (isCapturing.get()) {
-                kotlinx.coroutines.delay(1000)
-                val size = bytesWritten
-                updateOverlay("REC ${formatDuration(System.currentTimeMillis() - startTime)} | ${formatBytes(size)} | ${frameCount}f")
+                delay(1000)
+                updateOverlay("REC ${formatDuration(System.currentTimeMillis() - startTime)} | ${formatBytes(bytesWritten)} | ${frameCount}f")
             }
         }
 
@@ -157,46 +158,25 @@ class CaptureService : Service() {
     private fun initHevcVideoEncoder() {
         try {
             val resolution = captureResolution
-            val (width, height) = resolution.split("x").map { it.toInt() }
+            val parts = resolution.split("x")
+            val width = parts[0].toInt()
+            val height = parts[1].toInt()
             val fps = captureFps
             val bitrate = captureBitrate
 
-            // HEVC/H.265 Configuration
-            videoFormat = android.media.MediaFormat.createVideoFormat(android.media.MediaFormat.MIMETYPE_VIDEO_HEVC, width, height)
-            videoFormat?.setInteger(android.media.MediaFormat.KEY_BIT_RATE, bitrate)
-            videoFormat?.setInteger(android.media.MediaFormat.KEY_FRAME_RATE, fps)
-            videoFormat?.setInteger(android.media.MediaFormat.KEY_COLOR_FORMAT, android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            videoFormat?.setInteger(android.media.MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-            videoFormat?.setInteger(android.media.MediaFormat.KEY_PROFILE, android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain)
-            videoFormat?.setInteger(android.media.MediaFormat.KEY_LEVEL, 93) // Level 3.1
+            videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_HEVC, width, height)
+            videoFormat?.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+            videoFormat?.setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+            videoFormat?.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+            videoFormat?.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            videoFormat?.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.HEVCProfileMain)
+            videoFormat?.setInteger(MediaFormat.KEY_LEVEL, 93)
 
-            // Find HEVC encoder
-            val codecList = android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS)
-            var codecName: String? = null
-            for (i in 0 until codecList.codecCount) {
-                val info = codecList.getCodecInfoAt(i)
-                if (info.isEncoder) {
-                    val types = info.supportedTypes
-                    for (type in types) {
-                        if (type.equals("video/hevc", ignoreCase = true)) {
-                            codecName = info.name
-                            break
-                        }
-                    }
-                }
-                if (codecName != null) break
-            }
-
-            if (codecName == null) {
-                Log.w(TAG, "HEVC encoder not found, falling back to AVC")
-                initAvcVideoEncoder()
-                return
-            }
-
-            mediaCodec = MediaCodec.createByCodecName(codecName)
+            mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
             mediaCodec?.configure(videoFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             surface = mediaCodec?.createInputSurface()
             mediaCodec?.start()
+            createVirtualDisplay()
 
             Log.i(TAG, "HEVC encoder initialized: ${width}x$height @ ${fps}fps, ${bitrate}bps")
         } catch (e: Exception) {
@@ -208,20 +188,23 @@ class CaptureService : Service() {
     private fun initAvcVideoEncoder() {
         try {
             val resolution = captureResolution
-            val (width, height) = resolution.split("x").map { it.toInt() }
+            val parts = resolution.split("x")
+            val width = parts[0].toInt()
+            val height = parts[1].toInt()
             val fps = captureFps
             val bitrate = captureBitrate
 
-            val format = android.media.MediaFormat.createVideoFormat(android.media.MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
-            format.setInteger(android.media.MediaFormat.KEY_BIT_RATE, bitrate)
-            format.setInteger(android.media.MediaFormat.KEY_FRAME_RATE, fps)
-            format.setInteger(android.media.MediaFormat.KEY_COLOR_FORMAT, android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            format.setInteger(android.media.MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
 
-            mediaCodec = MediaCodec.createEncoderByType(android.media.MediaFormat.MIMETYPE_VIDEO_AVC)
+            mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
             mediaCodec?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             surface = mediaCodec?.createInputSurface()
             mediaCodec?.start()
+            createVirtualDisplay()
 
             Log.i(TAG, "AVC fallback encoder initialized")
         } catch (e: Exception) {
@@ -233,9 +216,9 @@ class CaptureService : Service() {
     private fun initOpusAudioRecorder() {
         try {
             val sampleRate = audioSampleRate
-            val channelConfig = android.content.res.AudioFormat.CHANNEL_IN_STEREO
-            val audioFormat = android.content.res.AudioFormat.ENCODING_PCM_16BIT
-            val bufferSize = android.media.MediaRecorder.getMinBufferSize(sampleRate, channelConfig, audioFormat) * 4
+            val channelConfig = AudioFormat.CHANNEL_IN_STEREO
+            val audioEncoding = AudioFormat.ENCODING_PCM_16BIT
+            val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioEncoding) * 4
 
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(audioSource)
@@ -257,18 +240,19 @@ class CaptureService : Service() {
 
     private fun createVirtualDisplay() {
         val resolution = captureResolution
-        val (width, height) = resolution.split("x").map { it.toInt() }
+        val parts = resolution.split("x")
+        val width = parts[0].toInt()
+        val height = parts[1].toInt()
         val density = resources.displayMetrics.densityDpi
 
         virtualDisplay = mediaProjection?.createVirtualDisplay(
             "SovereignCapture",
             width, height, density,
-            android.media.projection.VirtualDisplay.FLAG_PUBLIC,
-            surface!!,
+            0,
+            surface,
             null, null
         )
 
-        // Register callback for projection stop
         mediaProjection?.registerCallback(object : MediaProjection.Callback() {
             override fun onStop() {
                 super.onStop()
@@ -322,23 +306,13 @@ class CaptureService : Service() {
             Log.e(TAG, "Error stopping media projection", e)
         }
 
-        try {
-            fileChannel?.force(true)
-            fileChannel?.close()
-            fileChannel = null
-            fileOutputStream?.close()
-            fileOutputStream = null
-        } catch (e: Exception) {
-            Log.e(TAG, "Error closing file", e)
-        }
-
         hideForeground()
         Log.i(TAG, "Capture stopped. Frames: $frameCount, Bytes: $bytesWritten, Duration: ${formatDuration(System.currentTimeMillis() - startTime)}")
     }
 
     private fun pauseCapture() {
         if (isCapturing.get() && !isPaused.getAndSet(true)) {
-            mediaCodec?.pause()
+            isPaused.set(true)
             mediaRecorder?.pause()
             updateOverlay("PAUSED")
             Log.i(TAG, "Capture paused")
@@ -347,7 +321,7 @@ class CaptureService : Service() {
 
     private fun resumeCapture() {
         if (isCapturing.get() && isPaused.getAndSet(false)) {
-            mediaCodec?.resume()
+            isPaused.set(false)
             mediaRecorder?.resume()
             updateOverlay("REC ${formatDuration(System.currentTimeMillis() - startTime)}")
             Log.i(TAG, "Capture resumed")
@@ -388,20 +362,20 @@ class CaptureService : Service() {
     }
 
     private fun createOverlayView() {
-        overlayParams = android.view.WindowManager.LayoutParams(
-            android.view.WindowManager.LayoutParams.WRAP_CONTENT,
-            android.view.WindowManager.LayoutParams.WRAP_CONTENT,
+        overlayParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             } else {
-                android.view.WindowManager.LayoutParams.TYPE_PHONE
+                WindowManager.LayoutParams.TYPE_PHONE
             },
-            android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-            android.graphics.PixelFormat.TRANSLUCENT
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = android.view.Gravity.TOP or android.view.Gravity.END
+            gravity = Gravity.TOP or Gravity.END
             x = 20
             y = 100
         }
@@ -412,10 +386,13 @@ class CaptureService : Service() {
     }
 
     private fun showOverlay() {
+        if (overlayView.get() == null) {
+            createOverlayView()
+        }
         val view = overlayView.get() ?: return
         try {
             if (view.parent == null) {
-                windowManager.addView(view, overlayParams!!)
+                windowManager.addView(view, overlayParams)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error showing overlay", e)
@@ -445,37 +422,49 @@ class CaptureService : Service() {
         val hours = seconds / 3600
         val minutes = (seconds % 3600) / 60
         val secs = seconds % 60
-        return if (hours > 0) java.lang.String.format("%02d:%02d:%02d", hours, minutes, secs)
-            else java.lang.String.format("%02d:%02d", minutes, secs)
+        return if (hours > 0) String.format("%02d:%02d:%02d", hours, minutes, secs)
+        else String.format("%02d:%02d", minutes, secs)
     }
 
     private fun formatBytes(bytes: Long): String {
         val kb = bytes / 1024
         val mb = kb / 1024
-        if (mb > 0) return "${mb}MB"
-        else if (kb > 0) return "${kb}KB"
-        else return "${bytes}B"
+        return when {
+            mb > 0 -> "${mb}MB"
+            kb > 0 -> "${kb}KB"
+            else -> "${bytes}B"
+        }
     }
 
     override fun onDestroy() {
         stopCapture()
         hideOverlay()
         statsJob?.cancel()
+        captureJob?.cancel()
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
+        const val ACTION_START = "START_CAPTURE"
+        const val ACTION_STOP = "STOP_CAPTURE"
+        const val ACTION_PAUSE = "PAUSE_CAPTURE"
+        const val ACTION_RESUME = "RESUME_CAPTURE"
+        const val ACTION_SHOW_OVERLAY = "SHOW_OVERLAY"
+        const val ACTION_HIDE_OVERLAY = "HIDE_OVERLAY"
+        const val ACTION_UPDATE_OVERLAY = "UPDATE_OVERLAY"
+        const val EXTRA_MEDIA_PROJECTION = "media_projection"
+
         fun createCaptureIntent(context: Context): Intent {
             return Intent(context, CaptureService::class.java).apply {
-                action = "START_CAPTURE"
+                action = ACTION_START
             }
         }
 
         fun createStopIntent(context: Context): Intent {
             return Intent(context, CaptureService::class.java).apply {
-                action = "STOP_CAPTURE"
+                action = ACTION_STOP
             }
         }
     }

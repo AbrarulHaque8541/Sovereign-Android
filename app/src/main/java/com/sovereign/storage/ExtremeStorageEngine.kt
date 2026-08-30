@@ -130,11 +130,15 @@ object ExtremeStorageEngine {
     private fun decompressGZIP(data: ByteArray): ByteArray {
         return java.io.ByteArrayInputStream(data).use { bais ->
             java.util.zip.GZIPInputStream(bais).use { gis ->
-                gis.readBytes().also { count ->
-                    val result = java.io.ByteArray(count)
-                    bais.readFully(result)
-                    result
+                val result = ByteArray(1024)
+                val buffer = ByteArray(1024)
+                val output = java.io.ByteArrayOutputStream()
+                var len = gis.read(buffer)
+                while (len > 0) {
+                    output.write(buffer, 0, len)
+                    len = gis.read(buffer)
                 }
+                output.toByteArray()
             }
         }
     }

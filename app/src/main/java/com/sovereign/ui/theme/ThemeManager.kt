@@ -105,12 +105,12 @@ object ThemeManager {
 
     fun setTheme(context: Context, themeType: ThemeType) {
         currentTheme = themeType
-        val sharedPrefs = context.getSharedPreferences("sovereign_prefs", Context.MODE_PRIVATE)(context)
+        val sharedPrefs = context.getSharedPreferences("sovereign_prefs", Context.MODE_PRIVATE)
         sharedPrefs.edit().putString("saved_theme", themeType.id).apply()
     }
 
     fun getSavedTheme(context: Context): ThemeType {
-        val sharedPrefs = context.getSharedPreferences("sovereign_prefs", Context.MODE_PRIVATE)(context)
+        val sharedPrefs = context.getSharedPreferences("sovereign_prefs", Context.MODE_PRIVATE)
         val savedId = sharedPrefs.getString("saved_theme", "aurora")
         return ThemeType.values().find { it.id == savedId } ?: ThemeType.AURORA
     }
